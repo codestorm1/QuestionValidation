@@ -8,7 +8,7 @@ defmodule QuestionValidationTest do
 
   test "it is invalid with no answers" do
     questions = [%{text: "q1", options: [%{text: "an option"}, %{text: "another option"}]}]
-    answers = {}
+    answers = %{}
     assert_errors(questions, answers, q0: "was not answered")
   end
 
@@ -42,7 +42,7 @@ defmodule QuestionValidationTest do
 
   test "it is invalid when an answer is not one of the valid answers" do
     questions = [%{text: "q1", options: [%{text: "an option"}, %{text: "another option"}]}]
-    answers = %{q0: 2}
+    answers = %{"q0": 2}
 
     assert_errors(questions, answers, q0: "has an answer that is not on the list of valid answers")
   end
@@ -53,7 +53,7 @@ defmodule QuestionValidationTest do
       %{text: "q2", options: [%{text: "an option"}, %{text: "another option"}]}
     ]
 
-    answers = %{q0: 0}
+    answers = %{"q0": 0}
     assert_errors(questions, answers, q1: "was not answered")
   end
 
@@ -112,11 +112,13 @@ defmodule QuestionValidationTest do
   end
 
   # private
-  def answers_valid?(questions, answers) do
-    case QuestionValidation.validate(questions, answers) do
+  defp answers_valid?(questions, answers) do
+    test = case QuestionValidation.validate(questions, answers) do
       :ok -> true
-      _ -> false
+      some -> some
     end
+    IO.inspect(test)
+    test
   end
 
   defp assert_valid(questions, answers, message \\ nil) do
