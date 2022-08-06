@@ -112,10 +112,14 @@ defmodule QuestionValidationTest do
   end
 
   # private
-
+  def answers_valid?(questions, answers) do
+    case QuestionValidation.validate(questions, answers) do
+      :ok -> true
+      _ -> false
+    end
+  end
 
   defp assert_valid(questions, answers, message \\ nil) do
-    :ok = QuestionValidation.validate(questions, answers)
     assert answers_valid?(questions, answers), message || "expected to be valid but was not: "
   end
 
