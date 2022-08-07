@@ -2,10 +2,6 @@ defmodule QuestionValidationTest do
   use ExUnit.Case
   doctest QuestionValidation
 
-  test "greets the world" do
-    assert QuestionValidation.hello() == :world
-  end
-
   test "it is invalid with no answers" do
     questions = [%{text: "q1", options: [%{text: "an option"}, %{text: "another option"}]}]
     answers = %{}
@@ -42,7 +38,7 @@ defmodule QuestionValidationTest do
 
   test "it is invalid when an answer is not one of the valid answers" do
     questions = [%{text: "q1", options: [%{text: "an option"}, %{text: "another option"}]}]
-    answers = %{"q0": 2}
+    answers = %{q0: 2}
 
     assert_errors(questions, answers, q0: "has an answer that is not on the list of valid answers")
   end
@@ -53,7 +49,7 @@ defmodule QuestionValidationTest do
       %{text: "q2", options: [%{text: "an option"}, %{text: "another option"}]}
     ]
 
-    answers = %{"q0": 0}
+    answers = %{q0: 0}
     assert_errors(questions, answers, q1: "was not answered")
   end
 
@@ -86,8 +82,7 @@ defmodule QuestionValidationTest do
     answers = %{q0: 1, q1: 0}
 
     assert_errors(questions, answers,
-      q1:
-        "was answered even though a previous response indicated that the questions were complete"
+      q1: "was answered even though a previous response indicated that the questions were complete"
     )
   end
 
@@ -113,24 +108,24 @@ defmodule QuestionValidationTest do
 
   # private
   defp answers_valid?(questions, answers) do
-    test = case QuestionValidation.validate(questions, answers) do
-      :ok -> true
-      some -> some
+    case QuestionValidation.validate(questions, answers) do
+      %{} -> true
+      _ -> false
     end
-    IO.inspect(test)
-    test
   end
 
   defp assert_valid(questions, answers, message \\ nil) do
+    IO.puts("valid -> #{answers_valid?(questions, answers)}")
     assert answers_valid?(questions, answers), message || "expected to be valid but was not: "
   end
 
   defp refute_valid(questions, answers, message \\ "expected to be invalid but was valid") do
-    refute answers_valid?(questions, answers), message
+    valid = answers_valid?(questions, answers)
+    refute(valid, message)
   end
 
   defp assert_errors(questions, answers, errors) do
-    refute_valid(questions, answers, errors)
+    refute_valid(questions, answers)
     # assert_equal(errors, @validator.errors)
   end
 
