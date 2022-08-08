@@ -8,18 +8,23 @@ defmodule QuestionValidation do
     IO.puts("\nquestions: #{inspect(question_map)}\nanswers: #{inspect(answers)}")
     IO.puts("question count: #{length(question_map)}")
 
-    question_map
-    |> Enum.with_index()
-    |> Enum.reduce({false, %{}}, fn {question, index}, {acc_terminal_chosen, error_map} ->
-      {option_count, terminal_option} = get_option_info({question, index})
+    {terminal_chosen, errors} =
+      question_map
+      |> Enum.with_index()
+      |> Enum.reduce({false, %{}}, fn {question, index}, {acc_terminal_chosen, error_map} ->
+        IO.puts("term chosen top: #{acc_terminal_chosen}")
+        {option_count, terminal_option} = get_option_info({question, index})
 
-      {new_error_map, terminal_chosen} =
-        has_valid_answer({question, index}, answers, option_count, terminal_option, acc_terminal_chosen)
+        {new_error_map, terminal_chosen} =
+          has_valid_answer({question, index}, answers, option_count, terminal_option, acc_terminal_chosen)
 
-      terminal_chosen = acc_terminal_chosen || terminal_chosen
-      new_error_map = Map.merge(new_error_map, error_map)
-      {terminal_chosen, new_error_map}
-    end)
+        terminal_chosen = acc_terminal_chosen || terminal_chosen
+        new_error_map = Map.merge(new_error_map, error_map)
+        {terminal_chosen, new_error_map}
+      end)
+
+    IO.puts("term: #{terminal_chosen}, errors: #{inspect(errors)}")
+    errors
   end
 
   defp has_valid_answer(question_tuple, answers, option_count, terminal_option, terminal_chosen) do

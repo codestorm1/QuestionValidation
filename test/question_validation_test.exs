@@ -108,10 +108,8 @@ defmodule QuestionValidationTest do
 
   # private
   defp answers_valid?(questions, answers) do
-    case QuestionValidation.validate(questions, answers) do
-      %{} -> true
-      _ -> false
-    end
+    errors = QuestionValidation.validate(questions, answers)
+    errors == %{}
   end
 
   defp assert_valid(questions, answers, message \\ nil) do
