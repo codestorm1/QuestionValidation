@@ -60,13 +60,7 @@ defmodule QuestionValidation do
 
   defp get_any_errors(key, answer, _option_count, _completion_chosen = true) do
     # completion answer was already chosen, any more answers are invalid
-    cond do
-      answer != nil ->
-        %{key => "was answered even though a previous response indicated that the questions were complete"}
-
-      true ->
-        %{}
-    end
+    if answer == nil, do: %{}, else: %{key => "was answered even though a previous response indicated that the questions were complete"}
   end
 
   defp get_option_info(question_tuple) do
