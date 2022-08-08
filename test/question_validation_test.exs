@@ -108,8 +108,7 @@ defmodule QuestionValidationTest do
 
   # private
   defp answers_valid?(questions, answers) do
-    errors = QuestionValidation.validate(questions, answers)
-    errors == %{}
+    QuestionValidation.validate(questions, answers) == %{}
   end
 
   defp assert_valid(questions, answers, message \\ nil) do
@@ -122,7 +121,7 @@ defmodule QuestionValidationTest do
     refute(valid, message)
   end
 
-  defp assert_errors(questions, answers, errors) do
+  defp assert_errors(questions, answers, _errors) do
     refute_valid(questions, answers)
     # assert_equal(errors, @validator.errors)
   end
