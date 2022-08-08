@@ -9,62 +9,51 @@ defmodule QuestionValidation do
     {_terminal_chosen, errors} =
       question_map
       |> Enum.with_index()
-      |> Enum.reduce({false, %{}}, fn {question, index}, {acc_terminal_chosen, error_map} ->
+      |> Enum.reduce({false, %{}}, fn {question, index}, {acc_terminal_chosen, acc_error_map} ->
         {option_count, terminal_option} = get_option_info({question, index})
-        {key, answer} = get_answer(answers, {question, index})
-        {new_error_map, terminal_chosen} =
-          has_valid_answer(key, answer, option_count, terminal_option, acc_terminal_chosen)
-        terminal_chosen = acc_terminal_chosen || terminal_chosen
-        # dont merge, add kv pair
-        new_error_map = Map.merge(new_error_map, error_map)
-        {terminal_chosen, new_error_map}
+        {key, answer} = get_answer(answers, index)
+        error_map = Map.merge(acc_error_map, get_any_errors(key, answer, option_count, acc_terminal_chosen))
+        terminal_chosen = acc_terminal_chosen or terminal_chosen(terminal_option, answer)
+        {terminal_chosen, error_map}
       end)
 
     errors
   end
 
-  defp get_answer(answers, question_tuple) do
-    key = "q" <> (question_tuple |> elem(1) |> to_string())
+  defp get_answer(answers, question_index) do
+    key = "q#{question_index}"
     answer = Map.get(answers, key)
     {key, answer}
   end
 
-  defp has_valid_answer(key, answer, option_count, terminal_option, _terminal_chosen = false) do
-    result =
-      cond do
-        answer == nil ->
-          %{key => "was not answered"}
-
-        answer > option_count - 1 ->
-          %{key => "has an answer that is not on the list of valid answers"}
-
-        true ->
-          %{}
-      end
-
-      terminal_chosen =
-      if terminal_option == nil || answer == nil do
-        false
-      else
-        terminal_option == answer
-      end
-
-    {result, terminal_chosen}
+  defp terminal_chosen(terminal_option, answer) when is_number(terminal_option) and is_number(answer) do
+    answer == terminal_option
   end
 
-  defp has_valid_answer(key, answer, _option_count, _terminal_option, terminal_chosen = true) do
-    result =
-      cond do
-        answer != nil ->
-          %{
-            key => "was answered even though a previous response indicated that the questions were complete"
-          }
+  defp terminal_chosen(_terminal_option, _answer) do
+    false
+  end
 
-        true ->
-          %{}
-      end
+  defp get_any_errors(key, answer, option_count, _terminal_chosen = false) do
+    cond do
+      answer == nil ->
+        %{key => "was not answered"}
 
-    {result, terminal_chosen}
+      answer > option_count - 1 ->
+        %{key => "has an answer that is not on the list of valid answers"}
+
+      true ->
+        %{}
+    end
+  end
+
+  defp get_any_errors(key, answer, _option_count, _terminal_chosen = true) do
+    cond do
+      answer != nil ->
+        %{key => "was answered even though a previous response indicated that the questions were complete"}
+      true ->
+        %{}
+    end
   end
 
   defp get_option_info(question_tuple) do
@@ -85,7 +74,7 @@ defmodule QuestionValidation do
       end)
       |> List.first()
 
-    if terminal_option != nil do
+    unless terminal_option == nil do
       {_option, option_num} = terminal_option
       option_num
     else
