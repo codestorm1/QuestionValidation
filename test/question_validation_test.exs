@@ -5,13 +5,13 @@ defmodule QuestionValidationTest do
   test "it is invalid with no answers" do
     questions = [%{text: "q1", options: [%{text: "an option"}, %{text: "another option"}]}]
     answers = %{}
-    assert_errors(questions, answers, q0: "was not answered")
+    assert_errors(questions, answers, %{"q0" => "was not answered"})
   end
 
   test "it is invalid with nil answers" do
     questions = [%{text: "q1", options: [%{text: "an option"}, %{text: "another option"}]}]
     answers = nil
-    assert_errors(questions, answers, q0: "was not answered")
+    assert_errors(questions, answers, %{"q0" => "was not answered"})
   end
 
   test "errors are added for all questions" do
@@ -21,7 +21,7 @@ defmodule QuestionValidationTest do
     ]
 
     answers = nil
-    assert_errors(questions, answers, q0: "was not answered", q1: "was not answered")
+    assert_errors(questions, answers, %{"q0" => "was not answered", "q1" => "was not answered"})
   end
 
   test "it is valid when an answer is given" do
@@ -40,7 +40,7 @@ defmodule QuestionValidationTest do
     questions = [%{text: "q1", options: [%{text: "an option"}, %{text: "another option"}]}]
     answers = %{q0: 2}
 
-    assert_errors(questions, answers, q0: "has an answer that is not on the list of valid answers")
+    assert_errors(questions, answers, %{"q0" => "has an answer that is not on the list of valid answers"})
   end
 
   test "it is invalid when not all the questions are answered" do
@@ -50,7 +50,7 @@ defmodule QuestionValidationTest do
     ]
 
     answers = %{q0: 0}
-    assert_errors(questions, answers, q1: "was not answered")
+    assert_errors(questions, answers, %{"q1" => "was not answered"})
   end
 
   test "it is valid when all the questions are answered)" do
@@ -81,9 +81,9 @@ defmodule QuestionValidationTest do
 
     answers = %{q0: 1, q1: 0}
 
-    assert_errors(questions, answers,
-      q1: "was answered even though a previous response indicated that the questions were complete"
-    )
+    assert_errors(questions, answers, %{
+      "q1" => "was answered even though a previous response indicated that the questions were complete"
+    })
   end
 
   test "it is valid if complete_if is not a terminal answer and further questions are answered" do
@@ -103,27 +103,29 @@ defmodule QuestionValidationTest do
     ]
 
     answers = %{q0: 0}
-    assert_errors(questions, answers, q1: "was not answered")
+    assert_errors(questions, answers, %{"q1" => "was not answered"})
   end
 
   # private
   defp answers_valid?(questions, answers) do
-    QuestionValidation.validate(questions, answers) == %{}
+    errors = QuestionValidation.validate(questions, answers)
+    {errors == %{}, errors}
   end
 
   defp assert_valid(questions, answers, message \\ nil) do
-    IO.puts("valid -> #{answers_valid?(questions, answers)}")
-    assert answers_valid?(questions, answers), message || "expected to be valid but was not: "
+    {valid, _errors} = answers_valid?(questions, answers)
+    assert valid, message || "expected to be valid but was not: "
   end
 
   defp refute_valid(questions, answers, message \\ "expected to be invalid but was valid") do
-    valid = answers_valid?(questions, answers)
+    {valid, errors} = answers_valid?(questions, answers)
     refute(valid, message)
+    errors
   end
 
-  defp assert_errors(questions, answers, _errors) do
-    refute_valid(questions, answers)
-    # assert_equal(errors, @validator.errors)
+  defp assert_errors(questions, answers, errors) do
+    validator_errors = refute_valid(questions, answers)
+    assert(errors == validator_errors)
   end
 
   defp valid_options do

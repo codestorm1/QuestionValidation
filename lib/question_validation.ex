@@ -5,75 +5,65 @@ defmodule QuestionValidation do
 
   def validate(question_map, answer_map) do
     answers = map_keys_to_strings(answer_map)
-    IO.puts("\nquestions: #{inspect(question_map)}\nanswers: #{inspect(answers)}")
-    IO.puts("question count: #{length(question_map)}")
 
-    {terminal_chosen, errors} =
+    {_terminal_chosen, errors} =
       question_map
       |> Enum.with_index()
       |> Enum.reduce({false, %{}}, fn {question, index}, {acc_terminal_chosen, error_map} ->
-        IO.puts("\n Starting question ##{index}")
-        IO.puts("term chosen top: #{acc_terminal_chosen}")
         {option_count, terminal_option} = get_option_info({question, index})
-
+        {key, answer} = get_answer(answers, {question, index})
         {new_error_map, terminal_chosen} =
-          has_valid_answer({question, index}, answers, option_count, terminal_option, acc_terminal_chosen)
-
-        terminal_chosen = acc_terminal_chosen or terminal_chosen
+          has_valid_answer(key, answer, option_count, terminal_option, acc_terminal_chosen)
+        terminal_chosen = acc_terminal_chosen || terminal_chosen
+        # dont merge, add kv pair
         new_error_map = Map.merge(new_error_map, error_map)
         {terminal_chosen, new_error_map}
       end)
 
-    IO.puts("term: #{terminal_chosen}, errors: #{inspect(errors)}")
     errors
   end
 
-  defp has_valid_answer(question_tuple, answers, option_count, terminal_option, _terminal_chosen = false) do
+  defp get_answer(answers, question_tuple) do
     key = "q" <> (question_tuple |> elem(1) |> to_string())
     answer = Map.get(answers, key)
-    IO.puts("answer: #{inspect(answer)} for key #{key}")
-    # IO.puts("valid answer for item #{key} options #{option_count}? answer: #{answer}")
+    {key, answer}
+  end
+
+  defp has_valid_answer(key, answer, option_count, terminal_option, _terminal_chosen = false) do
     result =
       cond do
-        answer > option_count - 1 ->
-          %{key => "has an answer that is not on the list of valid answers"}
-
         answer == nil ->
           %{key => "was not answered"}
+
+        answer > option_count - 1 ->
+          %{key => "has an answer that is not on the list of valid answers"}
 
         true ->
           %{}
       end
 
-    terminal_chosen = answer == terminal_option
+      terminal_chosen =
+      if terminal_option == nil || answer == nil do
+        false
+      else
+        terminal_option == answer
+      end
 
-    IO.puts("terminal chosen: #{inspect(terminal_chosen)}")
-
-    IO.inspect(result)
-    IO.puts("answer was: #{answer}")
-    IO.puts("result was: #{inspect(result)}")
     {result, terminal_chosen}
   end
 
-  defp has_valid_answer(question_tuple, answers, _option_count, _terminal_option, terminal_chosen = true) do
-    key = "q" <> (question_tuple |> elem(1) |> to_string())
-    answer = Map.get(answers, key)
-    IO.puts("answer: #{inspect(answer)} for key #{key}")
-    # IO.puts("valid answer for item #{key} options #{option_count}? answer: #{answer}")
+  defp has_valid_answer(key, answer, _option_count, _terminal_option, terminal_chosen = true) do
     result =
       cond do
         answer != nil ->
           %{
             key => "was answered even though a previous response indicated that the questions were complete"
           }
+
         true ->
           %{}
       end
-    IO.puts("terminal chosen: #{inspect(terminal_chosen)}")
 
-    IO.inspect(result)
-    IO.puts("answer was: #{answer}")
-    IO.puts("result was: #{inspect(result)}")
     {result, terminal_chosen}
   end
 
